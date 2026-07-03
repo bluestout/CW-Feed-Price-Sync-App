@@ -74,14 +74,18 @@ export default function Index() {
       {!hasRules && (
         <s-section>
           <s-banner tone="info" heading="Get started">
-            <s-paragraph>
-              Add your first customization rule to start syncing feed prices.
-              A rule maps a product tag to a fixed amount that&apos;s added to
-              the product&apos;s base price.
-            </s-paragraph>
-            <s-button href="/app/customizations" variant="primary">
-              Add a customization rule
-            </s-button>
+            <s-stack direction="block" gap="base">
+              <s-paragraph>
+                Add your first customization rule to start syncing feed prices.
+                A rule maps a product tag to a fixed amount that&apos;s added to
+                the product&apos;s base price.
+              </s-paragraph>
+              <s-stack direction="inline">
+                <s-button href="/app/customizations" variant="primary">
+                  Add a customization rule
+                </s-button>
+              </s-stack>
+            </s-stack>
           </s-banner>
         </s-section>
       )}
