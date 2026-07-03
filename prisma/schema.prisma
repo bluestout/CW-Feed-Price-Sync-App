@@ -5,12 +5,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
-// enough when changing adapters.
-// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
 datasource db {
-  provider = "sqlite"
-  url      = "file:dev.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Session {
@@ -29,6 +26,61 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
+
   refreshToken        String?
   refreshTokenExpires DateTime?
+}
+
+/// A customization pricing rule: a product tag mapped to a fixed amount.
+/// Replaces the old metaobject-based customization prices.
+model CustomizationRule {
+  id        String   @id @default(cuid())
+  shop      String
+  tag       String
+  amount    Decimal  @db.Decimal(12, 2)
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([shop, tag])
+  @@index([shop])
+}
+
+/// A single feed-price sync event. Used for auto-sync (one row per product)
+/// and also for per-product rows produced during a bulk run.
+model SyncLog {
+  id           String   @id @default(cuid())
+  shop         String
+  type         String // "AUTO" | "BULK"
+  status       String // "UPDATED" | "SKIPPED" | "FAILED"
+  productId    String?
+  productTitle String?
+  matchedTag   String?
+  basePrice    String?
+  newFeedPrice String?
+  message      String?
+  bulkRunId    String?
+  bulkRun      BulkSyncRun? @relation(fields: [bulkRunId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+
+  @@index([shop, createdAt])
+  @@index([bulkRunId])
+}
+
+/// Summary of a bulk sync run, including a downloadable CSV of the results.
+model BulkSyncRun {
+  id            String   @id @default(cuid())
+  shop          String
+  status        String   @default("RUNNING") // "RUNNING" | "COMPLETED" | "FAILED"
+  totalProducts Int      @default(0)
+  updatedCount  Int      @default(0)
+  skippedCount  Int      @default(0)
+  failedCount   Int      @default(0)
+  csvData       String? // full CSV text of the run
+  message       String?
+  logs          SyncLog[]
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+
+  @@index([shop, startedAt])
 }
